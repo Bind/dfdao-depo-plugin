@@ -27,12 +27,12 @@ export const Stepper = (
 
 export const Button = (
   innerHTML: string,
-  onClick: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null
+  onClick?: ((this: GlobalEventHandlers, ev: MouseEvent) => any) | null
 ) => {
   let button = document.createElement("button");
   button.style.marginBottom = "10px";
   button.innerHTML = innerHTML;
-  button.onclick = onClick;
+  if (onClick) button.onclick = onClick;
   return button;
 };
 

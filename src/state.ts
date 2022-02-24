@@ -30,7 +30,6 @@ export class DepoState {
     this.depositors[addr] = (this.depositors?.[addr] || 0) - 1;
   }
   removeArtifact(artifactId: ArtifactId) {
-    console.log("remove artifact", artifactId);
     this.armory.delete(artifactId);
   }
   addArtifact(artifactId: ArtifactId) {

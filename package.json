@@ -1,6 +1,7 @@
 {
   "target": "ESNext",
   "dependencies": {
+    "ethers": "^5.5.4",
     "htm": "^3.0.4",
     "mobx": "^6.4.1",
     "preact": "^10.5.13"

@@ -6,6 +6,7 @@ import {
   ArtifactTypeNames,
   EthAddress,
 } from "@darkforest_eth/types";
+import { ContractTransaction } from "ethers";
 import { Button, LineBreak, Row, Text } from "src/views/basics";
 import GameManager from "@df/GameManager";
 
@@ -26,6 +27,7 @@ export const buildDepositorSection = (
     .sort((a, b) => {
       return depositors[b]! - depositors[a];
     })
+    .filter((a) => depositors[a] > 0)
     .map((addr) => getDepositorRow(addr, depositors[addr]))
     .forEach((row) => Contributors.append(row));
   container.append(LineBreak());
@@ -42,7 +44,8 @@ export const buildNoArtifactsToDepositPane = (container: HTMLDivElement) => {
 };
 function getArtifactDepositRow(
   artifact: Artifact,
-  onClick: (artifactId: ArtifactId) => void
+  executeDeposit: (artifactId: ArtifactId) => Promise<ContractTransaction>,
+  forceRefresh: () => void
 ): HTMLDivElement {
   const row = Row();
 
@@ -53,22 +56,30 @@ function getArtifactDepositRow(
       ArtifactTypeNames[artifact.artifactType]
     }`)
   );
-  row.append(
-    Button("deposit me", () => {
-      onClick(artifact.id);
-    })
-  );
+  const b = Button("deposit me");
+  b.onclick = async () => {
+    b.disabled = true;
+    const tx = await executeDeposit(artifact.id);
+    b.innerHTML = "Submitting";
+    await tx.wait();
+    b.innerHTML = "confirmed";
+    await df.hardRefreshArtifact(artifact.id);
+    forceRefresh();
+  };
+
+  row.append(b);
   return row;
 }
 
 export const buildDepositArtifactPane = (
   container: HTMLDivElement,
   myArtifacts: Artifact[],
-  onRowClick: (artifactId: ArtifactId) => void
+  executeDeposit: (artifactId: ArtifactId) => Promise<ContractTransaction>,
+  forceRefresh: () => void
 ) => {
   myArtifacts
     .map((a) => {
-      return getArtifactDepositRow(a, onRowClick);
+      return getArtifactDepositRow(a, executeDeposit, forceRefresh);
     })
     .forEach((r) => container.append(r));
 };

@@ -22,6 +22,7 @@ import {
   buildDepositorSection,
   buildNoArtifactsToDepositPane,
 } from "src/panes/Deposit";
+import { buildNoWithdrawlPane, buildWithdrawlPane } from "src/panes/Withdraw";
 type Pane = "withdraw" | "deposit" | "loading";
 
 const isNotShip = (artifact: Artifact) => {
@@ -50,8 +51,6 @@ class Plugin {
     this.WithdrawPane = document.createElement("div");
     this.LoadingPane = document.createElement("div");
     this.LoadingPane.innerText = "...loading...";
-    this.getArtifactWithdrawRow = this.getArtifactWithdrawRow.bind(this);
-    this.getArtifactDepositRow = this.getArtifactDepositRow.bind(this);
     this.setPaneParentContent = this.setPaneParentContent.bind(this);
     this.refresh = this.refresh.bind(this);
     this.initialize = this.initialize.bind(this);
@@ -80,16 +79,17 @@ class Plugin {
   setPaneControllerContent() {
     if (this.state?.userPermissions == "CAPTAIN") {
       this.PaneController!.innerHTML = "";
-      this.PaneController?.append(
-        Button("Deposit", () => {
-          this.togglePane("deposit");
-        })
-      );
-      this.PaneController?.append(
-        Button("Withdraw", () => {
-          this.togglePane("withdraw");
-        })
-      );
+      const d = Button("Deposit", () => {
+        this.togglePane("deposit");
+      });
+      d.style.width = "50%";
+      this.PaneController?.append(d);
+      const w = Button("Withdraw", () => {
+        this.togglePane("withdraw");
+      });
+      w.style.width = "50%";
+      this.PaneController?.append(w);
+      this.PaneController?.append(LineBreak());
     }
   }
   setPaneParentContent() {
@@ -104,32 +104,9 @@ class Plugin {
       this.PaneParent.append(this.WithdrawPane);
     }
   }
-  getDepositorRow(addr: string, deposits: number) {
-    const row = Row();
-    row.append(`${df.getTwitter(addr as EthAddress) || addr} ${deposits}`);
-    return row;
-  }
-  getArtifactDepositRow(artifact: Artifact): HTMLDivElement {
-    const row = Row();
-
-    row.append(
-      (document.createElement("text").innerHTML = `${artifactNameFromArtifact(
-        artifact
-      )} ${ArtifactRarityNames[artifact.rarity]} ${
-        ArtifactTypeNames[artifact.artifactType]
-      }`)
-    );
-    row.append(
-      Button("deposit me", () => {
-        this.deposit(artifact.id);
-      })
-    );
-    return row;
-  }
 
   setDepositPaneContent() {
     wipe(this.DepositPane);
-    debugger;
     const myArtifacts = df
       .getMyArtifacts()
       .filter(isNotShip)
@@ -140,8 +117,9 @@ class Plugin {
       buildDepositArtifactPane(
         this.DepositPane,
         myArtifacts,
-        (artifactId: ArtifactId) => {
-          this.deposit(artifactId);
+        this.deposit,
+        () => {
+          this.refresh(this.state!);
         }
       );
     }
@@ -149,34 +127,15 @@ class Plugin {
     buildDepositorSection(this.DepositPane, this.state.depositors);
   }
 
-  getArtifactWithdrawRow(artifact: Artifact): HTMLDivElement {
-    const row = Row();
-
-    row.append(
-      (document.createElement("text").innerHTML = `${artifactNameFromArtifact(
-        artifact
-      )} ${ArtifactRarityNames[artifact.rarity]} ${
-        ArtifactTypeNames[artifact.artifactType]
-      }`)
-    );
-
-    row.append(
-      Button("withdraw me", () => {
-        this.withdraw(artifact.id);
-      })
-    );
-    return row;
-  }
-
   setWithdrawPaneContent(state: DepoState) {
     wipe(this.WithdrawPane);
-    const deposited = df.getArtifactsWithIds(Array.from(state.armory));
+    const depoArtifacts = df
+      .getArtifactsWithIds(Array.from(state.armory))
+      .filter((a) => typeof a != "undefined");
     if (this.state?.armory.size == 0) {
-      this.WithdrawPane.innerText = "No Artifacts in the Depo";
+      buildNoWithdrawlPane(this.WithdrawPane);
     } else {
-      deposited
-        .map(this.getArtifactWithdrawRow)
-        .forEach((r) => this.WithdrawPane.append(r));
+      buildWithdrawlPane(this.WithdrawPane, depoArtifacts, this.withdraw);
     }
   }
 

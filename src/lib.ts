@@ -20,6 +20,7 @@ export function initializeState(state: DepoState, events: LogDescription[]) {
       const artifactId: ArtifactId = artifactIdFromEthersBN(
         e.args[1] as EthersBN
       );
+      console.log("[OLD] deposit", artifactId);
       state.addArtifact(artifactId);
       state.addDepositor(e.args[0], artifactId);
       df.hardRefreshArtifact(artifactId);
@@ -27,7 +28,9 @@ export function initializeState(state: DepoState, events: LogDescription[]) {
       const artifactId: ArtifactId = artifactIdFromEthersBN(
         e.args[1] as EthersBN
       );
+      console.log("[OLD] withdrawl", artifactId);
       state.removeArtifact(artifactId);
+      state.addWithdrawl(e.args[0], artifactId);
       df.hardRefreshArtifact(artifactId);
     } else if (e.name == "Promote") {
       //@ts-ignore
@@ -51,12 +54,14 @@ export const initializeContract = async () => {
       df.hardRefreshArtifact(art);
       state.addArtifact(art);
       state.addDepositor(addr, art);
+      console.log("[NEW] deposit", art);
     },
     ["Withdrawl"]: (addr: string, rawArtifactId: EthersBN) => {
       const art = artifactIdFromEthersBN(rawArtifactId) as ArtifactId;
       state.removeArtifact(art);
       state.addWithdrawl(addr, art);
       df.hardRefreshArtifact(art);
+      console.log("[NEW] withdrawl", art);
     },
     ["Promote"]: (promotor: string, promoted: string) => {
       if ((promoted as EthAddress) == df.getAccount()) {
@@ -94,14 +99,14 @@ export const initializeContract = async () => {
     state: initialState,
     deposit: (artifactId: ArtifactId) => {
       // Transfers Artifact directly to Depo
-      core["safeTransferFrom(address,address,uint256)"](
+      return core["safeTransferFrom(address,address,uint256)"](
         df.getAccount()!,
         DEPO_ADDRESS,
         artifactIdToDecStr(artifactId)
       );
     },
     withdraw: (artifactId: ArtifactId) => {
-      depo.withdrawArtifact(artifactIdToDecStr(artifactId));
+      return depo.withdrawArtifact(artifactIdToDecStr(artifactId));
     },
     onWithdraw: () => {},
     onDeposit: () => {},
