@@ -78,5 +78,7 @@ export const Row = () => {
   return row;
 };
 export const wipe = (el: HTMLElement) => {
-  el.childNodes.forEach((n) => el.removeChild(n));
+  while (el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
 };

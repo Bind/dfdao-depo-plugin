@@ -10,12 +10,18 @@ import {
   artifactNameFromArtifact,
   ArtifactRarityNames,
   EthAddress,
+  ArtifactId,
 } from "@darkforest_eth/types";
 import { autorun, toJS } from "mobx";
 import { initializeContract } from "../src/lib";
 import { Button, Row, wipe, Text, LineBreak } from "../src/views/basics";
 import { DepoState } from "src/state";
 import { DepoStateStatus } from "src/types";
+import {
+  buildDepositArtifactPane,
+  buildDepositorSection,
+  buildNoArtifactsToDepositPane,
+} from "src/panes/Deposit";
 type Pane = "withdraw" | "deposit" | "loading";
 
 const isNotShip = (artifact: Artifact) => {
@@ -123,32 +129,26 @@ class Plugin {
 
   setDepositPaneContent() {
     wipe(this.DepositPane);
+    debugger;
     const myArtifacts = df
       .getMyArtifacts()
       .filter(isNotShip)
       .filter(isInWallet);
     if (myArtifacts.length === 0) {
-      this.DepositPane.innerText = "No Artifacts to deposit";
+      buildNoArtifactsToDepositPane(this.DepositPane);
     } else {
-      myArtifacts
-        .map(this.getArtifactDepositRow)
-        .forEach((r) => this.DepositPane.append(r));
+      buildDepositArtifactPane(
+        this.DepositPane,
+        myArtifacts,
+        (artifactId: ArtifactId) => {
+          this.deposit(artifactId);
+        }
+      );
     }
-    const Contributors = document.createElement("div");
     if (!this.state?.depositors) return;
-    Object.keys(this.state.depositors)
-      .sort((a, b) => {
-        return this.state!.depositors[b]! - this.state!.depositors[a];
-      })
-      .map((addr) => this.getDepositorRow(addr, this.state!.depositors[addr]))
-      .forEach((row) => Contributors.append(row));
-    this.DepositPane.append(LineBreak());
-    this.DepositPane.append(LineBreak());
-
-    this.DepositPane.append(Text("Top Artifact Contributors", "center"));
-    this.DepositPane.append(LineBreak());
-    this.DepositPane.append(Contributors);
+    buildDepositorSection(this.DepositPane, this.state.depositors);
   }
+
   getArtifactWithdrawRow(artifact: Artifact): HTMLDivElement {
     const row = Row();
 
