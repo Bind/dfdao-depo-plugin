@@ -107,6 +107,7 @@ class Plugin {
 
   setDepositPaneContent() {
     wipe(this.DepositPane);
+
     const myArtifacts = df
       .getMyArtifacts()
       .filter(isNotShip)

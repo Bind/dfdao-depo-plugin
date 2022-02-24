@@ -7340,7 +7340,13 @@ var buildDepositorSection = (container, depositors) => {
   }).filter((a) => depositors[a] > 0).map((addr) => getDepositorRow(addr, depositors[addr])).forEach((row) => Contributors.append(row));
   container.append(LineBreak());
   container.append(LineBreak());
-  container.append(Text("Top Artifact Contributors", "center"));
+  const header = Text("Top Artifact Contributors", "center");
+  header.style.textAlign = "center";
+  header.style.fontFamily = "monospace";
+  header.style.fontWeight = "600";
+  header.style.fontSize = "14px";
+  header.style.color = "cyan";
+  container.append(header);
   container.append(LineBreak());
   container.append(Contributors);
 };
@@ -7365,6 +7371,15 @@ function getArtifactDepositRow(artifact, executeDeposit, forceRefresh) {
   return row;
 }
 var buildDepositArtifactPane = (container, myArtifacts, executeDeposit, forceRefresh) => {
+  const header = document.createElement("p");
+  header.innerText = "Wormholes will help the most!";
+  header.style.textAlign = "center";
+  header.style.fontFamily = "monospace";
+  header.style.fontWeight = "600";
+  header.style.fontSize = "14px";
+  header.style.color = "cyan";
+  container.append(header);
+  container.append(LineBreak());
   myArtifacts.map((a) => {
     return getArtifactDepositRow(a, executeDeposit, forceRefresh);
   }).forEach((r) => container.append(r));

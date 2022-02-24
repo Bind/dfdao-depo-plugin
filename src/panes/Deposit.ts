@@ -32,8 +32,13 @@ export const buildDepositorSection = (
     .forEach((row) => Contributors.append(row));
   container.append(LineBreak());
   container.append(LineBreak());
-
-  container.append(Text("Top Artifact Contributors", "center"));
+  const header = Text("Top Artifact Contributors", "center");
+  header.style.textAlign = "center";
+  header.style.fontFamily = "monospace";
+  header.style.fontWeight = "600";
+  header.style.fontSize = "14px";
+  header.style.color = "cyan";
+  container.append(header);
   container.append(LineBreak());
   container.append(Contributors);
 };
@@ -77,6 +82,15 @@ export const buildDepositArtifactPane = (
   executeDeposit: (artifactId: ArtifactId) => Promise<ContractTransaction>,
   forceRefresh: () => void
 ) => {
+  const header = document.createElement("p");
+  header.innerText = "Wormholes will help the most!";
+  header.style.textAlign = "center";
+  header.style.fontFamily = "monospace";
+  header.style.fontWeight = "600";
+  header.style.fontSize = "14px";
+  header.style.color = "cyan";
+  container.append(header);
+  container.append(LineBreak());
   myArtifacts
     .map((a) => {
       return getArtifactDepositRow(a, executeDeposit, forceRefresh);
