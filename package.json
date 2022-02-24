@@ -2,6 +2,7 @@
   "target": "ESNext",
   "dependencies": {
     "htm": "^3.0.4",
+    "mobx": "^6.4.1",
     "preact": "^10.5.13"
   },
   "devDependencies": {
