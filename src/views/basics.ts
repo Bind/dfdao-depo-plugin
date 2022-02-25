@@ -1,3 +1,6 @@
+import { CSSProperties } from "react";
+import { s } from "src/styles";
+
 export const Stepper = (
   onChange: ((this: GlobalEventHandlers, ev: Event) => any) | null,
   min = "0",
@@ -71,12 +74,17 @@ export const Select = (
   return div;
 };
 
-export const Row = () => {
-  const row = document.createElement("div");
-  row.style.display = "flex";
-  row.style.justifyContent = "space-between";
-  return row;
+export const Box = (text: string, style?: CSSProperties) => {
+  const box = document.createElement("div");
+  box.innerText = text;
+  if (style) s(style)(box);
+  return box;
 };
+
+export const Row = () => {
+  return Box("", { display: "flex", justifyContent: "space-between" });
+};
+
 export const wipe = (el: HTMLElement) => {
   while (el.firstChild) {
     el.removeChild(el.firstChild);

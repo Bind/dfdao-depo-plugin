@@ -7,14 +7,16 @@ import {
   EthAddress,
 } from "@darkforest_eth/types";
 import { ContractTransaction } from "ethers";
-import { Button, LineBreak, Row, Text } from "src/views/basics";
+import { Box, Button, LineBreak, Row, Text } from "src/views/basics";
 import GameManager from "@df/GameManager";
+import { styles } from "src/styles";
 
 declare const df: GameManager;
 
 function getDepositorRow(addr: string, deposits: number) {
   const row = Row();
-  row.append(`${df.getTwitter(addr as EthAddress) || addr} ${deposits}`);
+  row.append(Box(df.getTwitter(addr as EthAddress) || addr));
+  row.append(Box("" + deposits));
   return row;
 }
 
@@ -32,12 +34,7 @@ export const buildDepositorSection = (
     .forEach((row) => Contributors.append(row));
   container.append(LineBreak());
   container.append(LineBreak());
-  const header = Text("Top Artifact Contributors", "center");
-  header.style.textAlign = "center";
-  header.style.fontFamily = "monospace";
-  header.style.fontWeight = "600";
-  header.style.fontSize = "14px";
-  header.style.color = "cyan";
+  const header = styles.header(Text("Top Artifact Contributors", "center"));
   container.append(header);
   container.append(LineBreak());
   container.append(Contributors);
@@ -82,13 +79,7 @@ export const buildDepositArtifactPane = (
   executeDeposit: (artifactId: ArtifactId) => Promise<ContractTransaction>,
   forceRefresh: () => void
 ) => {
-  const header = document.createElement("p");
-  header.innerText = "Wormholes will help the most!";
-  header.style.textAlign = "center";
-  header.style.fontFamily = "monospace";
-  header.style.fontWeight = "600";
-  header.style.fontSize = "14px";
-  header.style.color = "cyan";
+  const header = styles.header(Text("Wormholes will help the most!"));
   container.append(header);
   container.append(LineBreak());
   myArtifacts

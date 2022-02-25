@@ -108,7 +108,5 @@ export const initializeContract = async () => {
     withdraw: (artifactId: ArtifactId) => {
       return depo.withdrawArtifact(artifactIdToDecStr(artifactId));
     },
-    onWithdraw: () => {},
-    onDeposit: () => {},
   };
 };

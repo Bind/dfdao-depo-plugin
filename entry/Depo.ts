@@ -3,27 +3,20 @@ import GameUIManager from "@df/GameUIManager";
 
 declare const df: GameManager;
 declare const ui: GameUIManager;
-
-import {
-  Artifact,
-  ArtifactTypeNames,
-  artifactNameFromArtifact,
-  ArtifactRarityNames,
-  EthAddress,
-  ArtifactId,
-} from "@darkforest_eth/types";
+import { styles } from "../src/styles";
+import { Artifact } from "@darkforest_eth/types";
 import { autorun, toJS } from "mobx";
 import { initializeContract } from "../src/lib";
-import { Button, Row, wipe, Text, LineBreak } from "../src/views/basics";
+import { Button, wipe, LineBreak } from "../src/views/basics";
 import { DepoState } from "src/state";
 import { DepoStateStatus } from "src/types";
 import {
   buildDepositArtifactPane,
   buildDepositorSection,
   buildNoArtifactsToDepositPane,
-} from "src/panes/Deposit";
-import { buildNoWithdrawlPane, buildWithdrawlPane } from "src/panes/Withdraw";
-type Pane = "withdraw" | "deposit" | "loading";
+} from "src/views/Deposit";
+import { buildNoWithdrawlPane, buildWithdrawlPane } from "src/views/Withdraw";
+type Pane = "withdraw" | "deposit";
 
 const isNotShip = (artifact: Artifact) => {
   return artifact.artifactType < 10;
@@ -82,12 +75,12 @@ class Plugin {
       const d = Button("Deposit", () => {
         this.togglePane("deposit");
       });
-      d.style.width = "50%";
+      styles.tabButton(d);
       this.PaneController?.append(d);
       const w = Button("Withdraw", () => {
         this.togglePane("withdraw");
       });
-      w.style.width = "50%";
+      styles.tabButton(w);
       this.PaneController?.append(w);
       this.PaneController?.append(LineBreak());
     }
