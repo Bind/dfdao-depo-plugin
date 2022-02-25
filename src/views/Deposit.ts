@@ -6,6 +6,7 @@ import {
   ArtifactTypeNames,
   EthAddress,
 } from "@darkforest_eth/types";
+
 import { ContractTransaction } from "ethers";
 import { Box, Button, LineBreak, Row, Text } from "src/views/basics";
 import GameManager from "@df/GameManager";
@@ -15,7 +16,7 @@ declare const df: GameManager;
 
 function getDepositorRow(addr: string, deposits: number) {
   const row = Row();
-  row.append(Box(df.getTwitter(addr as EthAddress) || addr));
+  row.append(Box(df.getTwitter(addr.toLowerCase() as EthAddress) || addr));
   row.append(Box("" + deposits));
   return row;
 }
@@ -44,6 +45,7 @@ export const buildNoArtifactsToDepositPane = (container: HTMLDivElement) => {
   container.innerText = "No Artifacts to deposit";
   return container;
 };
+
 function getArtifactDepositRow(
   artifact: Artifact,
   executeDeposit: (artifactId: ArtifactId) => Promise<ContractTransaction>,

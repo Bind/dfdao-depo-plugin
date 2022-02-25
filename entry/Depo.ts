@@ -38,6 +38,7 @@ class Plugin {
   pane: Pane = "deposit";
   status: DepoStateStatus = "LOADING";
   constructor() {
+    df.refreshTwitters();
     this.PaneController = document.createElement("div");
     this.PaneParent = document.createElement("div");
     this.DepositPane = document.createElement("div");
