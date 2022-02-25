@@ -1,3 +1,4 @@
+export const DEPO_ADDRESS = "0xd8c00a439ac617f51e1f8fb58fa7f7334be56f63";
 export const DEPO_ABI = [
   {
     type: "constructor",

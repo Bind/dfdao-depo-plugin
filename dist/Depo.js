@@ -2679,6 +2679,45 @@ var require_dist4 = __commonJS({
   }
 });
 
+// src/styles.ts
+var s = (styles2) => {
+  return (el) => {
+    Object.keys(styles2).forEach((key) => {
+      el.style[key] = styles2[key];
+    });
+    return el;
+  };
+};
+var directionMapping = {
+  left: "marginLeft",
+  right: "marginRight",
+  top: "marginTop",
+  bottom: "marginBottom"
+};
+var space = (el, direction, sp) => {
+  el.style[directionMapping[direction]] = sp;
+  return el;
+};
+var tabButtonStyle = {
+  width: "50%"
+};
+var empthStyle = {
+  fontWeight: 600,
+  color: "cyan"
+};
+var headerStyle = {
+  fontSize: "14px",
+  fontFamily: "monospace",
+  textAlign: "center",
+  ...empthStyle
+};
+var styles = {
+  tabButton: s(tabButtonStyle),
+  header: s(headerStyle),
+  emph: s(empthStyle),
+  space
+};
+
 // node_modules/mobx/dist/mobx.esm.js
 var niceErrors = {
   0: "Invalid value for configuration 'enforceActions', expected 'never', 'always' or 'observed'",
@@ -2885,8 +2924,8 @@ function getPlainObjectKeys(object2) {
   if (!symbols.length) {
     return keys;
   }
-  return [].concat(keys, symbols.filter(function(s) {
-    return objectPrototype.propertyIsEnumerable.call(object2, s);
+  return [].concat(keys, symbols.filter(function(s3) {
+    return objectPrototype.propertyIsEnumerable.call(object2, s3);
   }));
 }
 var ownKeys = typeof Reflect !== "undefined" && Reflect.ownKeys ? Reflect.ownKeys : hasGetOwnPropertySymbols ? function(obj) {
@@ -6930,6 +6969,7 @@ if (typeof __MOBX_DEVTOOLS_GLOBAL_HOOK__ === "object") {
 }
 
 // src/constants.ts
+var DEPO_ADDRESS = "0xd8c00a439ac617f51e1f8fb58fa7f7334be56f63";
 var DEPO_ABI = [
   {
     type: "constructor",
@@ -7197,11 +7237,15 @@ var DepoState = class {
     __publicField(this, "status", "LOADING");
     makeAutoObservable(this);
   }
-  addDepositor(addr, artifactId) {
-    this.depositors[addr] = (this.depositors?.[addr] || 0) + 1;
+  addDepositor(addr, type) {
+    if (!this.depositors[addr])
+      this.depositors[addr] = {};
+    this.depositors[addr][type] = (this.depositors[addr]?.[type] || 0) + 1;
   }
-  addWithdrawl(addr, artifactId) {
-    this.depositors[addr] = (this.depositors?.[addr] || 0) - 1;
+  addWithdrawl(addr, type) {
+    if (!this.depositors[addr])
+      this.depositors[addr] = {};
+    this.depositors[addr][type] = (this.depositors[addr][type] || 0) - 1;
   }
   removeArtifact(artifactId) {
     this.armory.delete(artifactId);
@@ -7223,15 +7267,13 @@ function initializeState(state, events) {
   events.forEach((e) => {
     if (e.name == "Deposit") {
       const artifactId = (0, import_serde.artifactIdFromEthersBN)(e.args[1]);
-      console.log("[OLD] deposit", artifactId);
       state.addArtifact(artifactId);
-      state.addDepositor(e.args[0], artifactId);
+      state.addDepositor(e.args[0], df.getArtifactWithId(artifactId)?.artifactType);
       df.hardRefreshArtifact(artifactId);
     } else if (e.name == "Withdrawl") {
       const artifactId = (0, import_serde.artifactIdFromEthersBN)(e.args[1]);
-      console.log("[OLD] withdrawl", artifactId);
       state.removeArtifact(artifactId);
-      state.addWithdrawl(e.args[0], artifactId);
+      state.addWithdrawl(e.args[0], df.getArtifactWithId(artifactId)?.artifactType);
       df.hardRefreshArtifact(artifactId);
     } else if (e.name == "Promote") {
       if (e.args[1] == df.getEthConnection().signer.address) {
@@ -7242,7 +7284,6 @@ function initializeState(state, events) {
   return state;
 }
 var initializeContract = async () => {
-  const DEPO_ADDRESS = "0xd8c00a439ac617f51e1f8fb58fa7f7334be56f63";
   const depo = await df.loadContract(DEPO_ADDRESS, DEPO_ABI);
   const state = new DepoState();
   const eventHandlers = {
@@ -7250,14 +7291,15 @@ var initializeContract = async () => {
       const art = (0, import_serde.artifactIdFromEthersBN)(rawArtifactId);
       df.hardRefreshArtifact(art);
       state.addArtifact(art);
-      state.addDepositor(addr, art);
+      state.addDepositor(addr, df.getArtifactWithId(art)?.artifactType);
       console.log("[NEW] deposit", art);
     },
     ["Withdrawl"]: (addr, rawArtifactId) => {
       const art = (0, import_serde.artifactIdFromEthersBN)(rawArtifactId);
       state.removeArtifact(art);
-      state.addWithdrawl(addr, art);
       df.hardRefreshArtifact(art);
+      df.getArtifactWithId(art)?.artifactType;
+      state.addWithdrawl(addr, df.getArtifactWithId(art)?.artifactType);
       console.log("[NEW] withdrawl", art);
     },
     ["Promote"]: (promotor, promoted) => {
@@ -7290,10 +7332,6 @@ var initializeContract = async () => {
     },
     withdraw: (artifactId) => {
       return depo.withdrawArtifact((0, import_serde.artifactIdToDecStr)(artifactId));
-    },
-    onWithdraw: () => {
-    },
-    onDeposit: () => {
     }
   };
 };
@@ -7314,11 +7352,15 @@ var Text = (innerHTML, textAlign = "left") => {
   return text;
 };
 var LineBreak = () => document.createElement("br");
+var Box = (text, style) => {
+  const box2 = document.createElement("div");
+  box2.innerText = text;
+  if (style)
+    s(style)(box2);
+  return box2;
+};
 var Row = () => {
-  const row = document.createElement("div");
-  row.style.display = "flex";
-  row.style.justifyContent = "space-between";
-  return row;
+  return Box("", { display: "flex", justifyContent: "space-between" });
 };
 var wipe = (el) => {
   while (el.firstChild) {
@@ -7326,26 +7368,37 @@ var wipe = (el) => {
   }
 };
 
-// src/panes/Deposit.ts
+// src/views/Deposit.ts
 var import_types = __toModule(require_dist());
+function countArtifacts(counter) {
+  return Object.keys(counter).reduce((acc, k) => acc + counter[k], 0);
+}
+function countWH(counter) {
+  return counter?.[import_types.ArtifactType.Wormhole] || 0;
+}
+function countNotWH(counter) {
+  return Object.keys(counter).filter((k) => k != import_types.ArtifactType.Wormhole.toString()).reduce((acc, k) => acc + counter[k], 0);
+}
 function getDepositorRow(addr, deposits) {
   const row = Row();
-  row.append(`${df.getTwitter(addr) || addr} ${deposits}`);
+  row.append(Box(df.getTwitter(addr.toLowerCase()) || addr.slice(0, 5).concat("...")));
+  let bookend = Row();
+  let whs = countWH(deposits);
+  if (whs > 0) {
+    bookend.append(styles.emph(Box(whs + (whs > 1 ? " wormholes" : " wormhole"))));
+  }
+  bookend.append(styles.space(Box(countNotWH(deposits) + " other"), "left", "12px"));
+  row.append(bookend);
   return row;
 }
 var buildDepositorSection = (container, depositors) => {
   const Contributors = document.createElement("div");
   Object.keys(depositors).sort((a, b) => {
-    return depositors[b] - depositors[a];
-  }).filter((a) => depositors[a] > 0).map((addr) => getDepositorRow(addr, depositors[addr])).forEach((row) => Contributors.append(row));
+    return countArtifacts(depositors[b]) - countArtifacts(depositors[a]);
+  }).filter((a) => countArtifacts(depositors[a]) > 0).map((addr) => getDepositorRow(addr, depositors[addr])).forEach((row) => Contributors.append(row));
   container.append(LineBreak());
   container.append(LineBreak());
-  const header = Text("Top Artifact Contributors", "center");
-  header.style.textAlign = "center";
-  header.style.fontFamily = "monospace";
-  header.style.fontWeight = "600";
-  header.style.fontSize = "14px";
-  header.style.color = "cyan";
+  const header = styles.header(Text("Top Artifact Contributors", "center"));
   container.append(header);
   container.append(LineBreak());
   container.append(Contributors);
@@ -7371,13 +7424,7 @@ function getArtifactDepositRow(artifact, executeDeposit, forceRefresh) {
   return row;
 }
 var buildDepositArtifactPane = (container, myArtifacts, executeDeposit, forceRefresh) => {
-  const header = document.createElement("p");
-  header.innerText = "Wormholes will help the most!";
-  header.style.textAlign = "center";
-  header.style.fontFamily = "monospace";
-  header.style.fontWeight = "600";
-  header.style.fontSize = "14px";
-  header.style.color = "cyan";
+  const header = styles.header(Text("Wormholes will help the most!"));
   container.append(header);
   container.append(LineBreak());
   myArtifacts.map((a) => {
@@ -7385,7 +7432,7 @@ var buildDepositArtifactPane = (container, myArtifacts, executeDeposit, forceRef
   }).forEach((r) => container.append(r));
 };
 
-// src/panes/Withdraw.ts
+// src/views/Withdraw.ts
 var import_types2 = __toModule(require_dist());
 var buildNoWithdrawlPane = (container) => {
   container.innerText = "No Artifacts in the Depo";
@@ -7429,6 +7476,7 @@ var Plugin = class {
     __publicField(this, "deposit");
     __publicField(this, "pane", "deposit");
     __publicField(this, "status", "LOADING");
+    df.refreshTwitters();
     this.PaneController = document.createElement("div");
     this.PaneParent = document.createElement("div");
     this.DepositPane = document.createElement("div");
@@ -7463,12 +7511,12 @@ var Plugin = class {
       const d = Button("Deposit", () => {
         this.togglePane("deposit");
       });
-      d.style.width = "50%";
+      styles.tabButton(d);
       this.PaneController?.append(d);
       const w = Button("Withdraw", () => {
         this.togglePane("withdraw");
       });
-      w.style.width = "50%";
+      styles.tabButton(w);
       this.PaneController?.append(w);
       this.PaneController?.append(LineBreak());
     }

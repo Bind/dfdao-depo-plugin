@@ -3,6 +3,7 @@ import {
   ArtifactId,
   artifactNameFromArtifact,
   ArtifactRarityNames,
+  ArtifactType,
   ArtifactTypeNames,
   EthAddress,
 } from "@darkforest_eth/types";
@@ -10,27 +11,58 @@ import {
 import { ContractTransaction } from "ethers";
 import { Box, Button, LineBreak, Row, Text } from "src/views/basics";
 import GameManager from "@df/GameManager";
-import { styles } from "src/styles";
+import { styles, s } from "src/styles";
+import { ArtifactCounter } from "src/types";
+import { _isComputed } from "mobx/dist/internal";
 
 declare const df: GameManager;
 
-function getDepositorRow(addr: string, deposits: number) {
+function countArtifacts(counter: ArtifactCounter) {
+  return Object.keys(counter).reduce((acc, k) => acc + counter[k], 0);
+}
+
+function countWH(counter: ArtifactCounter) {
+  return counter?.[ArtifactType.Wormhole] || 0;
+}
+function countNotWH(counter: ArtifactCounter) {
+  return Object.keys(counter)
+    .filter((k) => k != ArtifactType.Wormhole.toString())
+    .reduce((acc, k) => acc + counter[k], 0);
+}
+
+function getDepositorRow(addr: string, deposits: ArtifactCounter) {
   const row = Row();
-  row.append(Box(df.getTwitter(addr.toLowerCase() as EthAddress) || addr));
-  row.append(Box("" + deposits));
+  row.append(
+    Box(
+      df.getTwitter(addr.toLowerCase() as EthAddress) ||
+        addr.slice(0, 5).concat("...")
+    )
+  );
+  let bookend = Row();
+  let whs = countWH(deposits);
+  if (whs > 0) {
+    bookend.append(
+      styles.emph(Box(whs + (whs > 1 ? " wormholes" : " wormhole")))
+    );
+  }
+  bookend.append(
+    styles.space(Box(countNotWH(deposits) + " other"), "left", "12px")
+  );
+  row.append(bookend);
+
   return row;
 }
 
 export const buildDepositorSection = (
   container: HTMLDivElement,
-  depositors: { [key: string]: number }
+  depositors: { [key: string]: ArtifactCounter }
 ) => {
   const Contributors = document.createElement("div");
   Object.keys(depositors)
     .sort((a, b) => {
-      return depositors[b]! - depositors[a];
+      return countArtifacts(depositors[b])! - countArtifacts(depositors[a]);
     })
-    .filter((a) => depositors[a] > 0)
+    .filter((a) => countArtifacts(depositors[a]) > 0)
     .map((addr) => getDepositorRow(addr, depositors[addr]))
     .forEach((row) => Contributors.append(row));
   container.append(LineBreak());

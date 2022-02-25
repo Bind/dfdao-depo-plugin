@@ -1,4 +1,4 @@
-import { ArtifactId, EthAddress } from "@darkforest_eth/types";
+import { ArtifactId, ArtifactType, EthAddress } from "@darkforest_eth/types";
 import { makeAutoObservable } from "mobx";
 import GameManager from "@df/GameManager";
 import GameUIManager from "@df/GameUIManager";
@@ -7,10 +7,12 @@ import { DepoStateStatus, UserPermission } from "./types";
 declare const df: GameManager;
 declare const ui: GameUIManager;
 
+type ArtifactCounter = {
+  [key: ArtifactType]: number;
+};
 export class DepoState {
   // Folks who have deposited & how many artifacts
-  depositors: { [key: string]: number } = {};
-
+  depositors: { [key: string]: ArtifactCounter } = {};
   // current deposits
   armory: Set<ArtifactId> = new Set();
 
@@ -23,11 +25,13 @@ export class DepoState {
   constructor() {
     makeAutoObservable(this);
   }
-  addDepositor(addr: string, artifactId: ArtifactId) {
-    this.depositors[addr] = (this.depositors?.[addr] || 0) + 1;
+  addDepositor(addr: string, type: ArtifactType) {
+    if (!this.depositors[addr]) this.depositors[addr] = {};
+    this.depositors[addr][type] = (this.depositors[addr]?.[type] || 0) + 1;
   }
-  addWithdrawl(addr: string, artifactId: ArtifactId) {
-    this.depositors[addr] = (this.depositors?.[addr] || 0) - 1;
+  addWithdrawl(addr: string, type: ArtifactType) {
+    if (!this.depositors[addr]) this.depositors[addr] = {};
+    this.depositors[addr][type] = (this.depositors[addr][type] || 0) - 1;
   }
   removeArtifact(artifactId: ArtifactId) {
     this.armory.delete(artifactId);

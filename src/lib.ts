@@ -1,6 +1,6 @@
 import { Depo } from "./typechain";
-import { DEPO_ABI } from "./constants";
-import { BigNumber as EthersBN, Contract } from "ethers";
+import { DEPO_ABI, DEPO_ADDRESS } from "./constants";
+import { BigNumber as EthersBN } from "ethers";
 import { DarkForest } from "@darkforest_eth/contracts/typechain";
 import { ArtifactId, EthAddress } from "@darkforest_eth/types";
 import {
@@ -20,17 +20,22 @@ export function initializeState(state: DepoState, events: LogDescription[]) {
       const artifactId: ArtifactId = artifactIdFromEthersBN(
         e.args[1] as EthersBN
       );
-      console.log("[OLD] deposit", artifactId);
       state.addArtifact(artifactId);
-      state.addDepositor(e.args[0], artifactId);
+
+      state.addDepositor(
+        e.args[0],
+        df.getArtifactWithId(artifactId)?.artifactType!
+      );
       df.hardRefreshArtifact(artifactId);
     } else if (e.name == "Withdrawl") {
       const artifactId: ArtifactId = artifactIdFromEthersBN(
         e.args[1] as EthersBN
       );
-      console.log("[OLD] withdrawl", artifactId);
       state.removeArtifact(artifactId);
-      state.addWithdrawl(e.args[0], artifactId);
+      state.addWithdrawl(
+        e.args[0],
+        df.getArtifactWithId(artifactId)?.artifactType!
+      );
       df.hardRefreshArtifact(artifactId);
     } else if (e.name == "Promote") {
       //@ts-ignore
@@ -44,7 +49,6 @@ export function initializeState(state: DepoState, events: LogDescription[]) {
 }
 
 export const initializeContract = async () => {
-  const DEPO_ADDRESS = "0xd8c00a439ac617f51e1f8fb58fa7f7334be56f63";
   const depo: Depo = await df.loadContract(DEPO_ADDRESS, DEPO_ABI);
   const state = new DepoState();
 
@@ -53,14 +57,15 @@ export const initializeContract = async () => {
       const art = artifactIdFromEthersBN(rawArtifactId) as ArtifactId;
       df.hardRefreshArtifact(art);
       state.addArtifact(art);
-      state.addDepositor(addr, art);
+      state.addDepositor(addr, df.getArtifactWithId(art)?.artifactType!);
       console.log("[NEW] deposit", art);
     },
     ["Withdrawl"]: (addr: string, rawArtifactId: EthersBN) => {
       const art = artifactIdFromEthersBN(rawArtifactId) as ArtifactId;
       state.removeArtifact(art);
-      state.addWithdrawl(addr, art);
       df.hardRefreshArtifact(art);
+      df.getArtifactWithId(art)?.artifactType;
+      state.addWithdrawl(addr, df.getArtifactWithId(art)?.artifactType!);
       console.log("[NEW] withdrawl", art);
     },
     ["Promote"]: (promotor: string, promoted: string) => {
